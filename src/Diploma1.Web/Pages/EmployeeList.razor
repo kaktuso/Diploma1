@@ -1,32 +1,52 @@
 @page "/employees"
 @inject Diploma1.Web.Services.EmployeeService EmployeeService
+@inject Diploma1.Web.Services.DepartmentService DepartmentService
+@inject Diploma1.Web.Services.WorkplaceService WorkplaceService
 
-<h3>Сотрудники</h3>
-@if (employees == null)
+<h1>Сотрудники</h1>
+
+<div class="toolbar">
+    <input placeholder="Поиск по ФИО, email или должности" @bind="searchText" @bind:event="oninput" />
+    <button class="btn-primary" @onclick="StartCreate">Добавить сотрудника</button>
+</div>
+
+@if (employees is null)
 {
     <p>Загрузка...</p>
 }
+else if (!FilteredEmployees.Any())
+{
+    <p>Сотрудники не найдены.</p>
+}
 else
 {
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>ФИО</th>
                 <th>Email</th>
                 <th>Должность</th>
+                <th>Отдел</th>
+                <th>Раб. место</th>
+                <th>Роль</th>
+                <th>Инженер</th>
                 <th>Действия</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var emp in employees)
+            @foreach (var emp in FilteredEmployees)
             {
                 <tr>
                     <td>@emp.FullName</td>
                     <td>@emp.Email</td>
                     <td>@emp.Position</td>
-                    <td>
-                        <button @onclick="() => Edit(emp.Id)">Изменить</button>
-                        <button @onclick="() => Delete(emp.Id)">Удалить</button>
+                    <td>@DepartmentName(emp.DepartmentId)</td>
+                    <td>@WorkplaceName(emp.WorkplaceId)</td>
+                    <td>@emp.Role</td>
+                    <td>@EngineerName(emp.AssignedEngineerId)</td>
+                    <td class="actions-cell">
+                        <button class="btn-outline" @onclick="() => StartEdit(emp)">Изменить</button>
+                        <button class="btn-danger" @onclick="() => Delete(emp.Id)">Удалить</button>
                     </td>
                 </tr>
             }
@@ -34,16 +54,166 @@ else
     </table>
 }
 
+@if (isEditorOpen)
+{
+    <section class="editor-panel">
+        <h3>@(editingId.HasValue ? "Редактирование сотрудника" : "Новый сотрудник")</h3>
+
+        <div class="form-grid">
+            <label>
+                ФИО
+                <input @bind="editModel.FullName" />
+            </label>
+            <label>
+                Email
+                <input @bind="editModel.Email" type="email" />
+            </label>
+            <label>
+                Должность
+                <input @bind="editModel.Position" />
+            </label>
+            <label>
+                Роль
+                <select @bind="editModel.Role">
+                    <option value="Employee">Сотрудник</option>
+                    <option value="SafetyEngineer">Инженер по ОТ</option>
+                    <option value="Administrator">Администратор</option>
+                </select>
+            </label>
+            <label>
+                Отдел
+                <select @bind="editModel.DepartmentId">
+                    @foreach (var dep in departments)
+                    {
+                        <option value="@dep.Id">@dep.Name</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Рабочее место
+                <select @bind="editModel.WorkplaceId">
+                    @foreach (var wp in workplaces)
+                    {
+                        <option value="@wp.Id">@wp.Name (@wp.Type)</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Назначенный инженер
+                <select @bind="editModel.AssignedEngineerId">
+                    <option value="">Не назначен</option>
+                    @foreach (var engineer in engineers)
+                    {
+                        <option value="@engineer.Id">@engineer.FullName</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <div class="editor-actions">
+            <button class="btn-primary" @onclick="Save">Сохранить</button>
+            <button class="btn-outline" @onclick="Cancel">Отмена</button>
+        </div>
+    </section>
+}
+
 @code {
-    List<Diploma1.Web.Models.EmployeeDto>? employees;
+    private List<Diploma1.Web.Models.EmployeeDto>? employees;
+    private List<Diploma1.Web.Models.DepartmentDto> departments = new();
+    private List<Diploma1.Web.Models.WorkplaceDto> workplaces = new();
+    private List<Diploma1.Web.Models.EmployeeDto> engineers = new();
+
+    private Diploma1.Web.Models.EmployeeDto editModel = new();
+    private Guid? editingId;
+    private bool isEditorOpen;
+    private string searchText = string.Empty;
+
+    private IEnumerable<Diploma1.Web.Models.EmployeeDto> FilteredEmployees =>
+        employees?.Where(e =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            e.FullName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            e.Email.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            e.Position.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<Diploma1.Web.Models.EmployeeDto>();
+
     protected override async Task OnInitializedAsync()
     {
-        employees = await EmployeeService.GetAllAsync();
+        await LoadReferences();
+        await Refresh();
     }
-    void Edit(Guid id) { /* переход на страницу редактирования */ }
-    async Task Delete(Guid id)
+
+    private async Task LoadReferences()
+    {
+        departments = await DepartmentService.GetAllAsync() ?? new();
+        workplaces = await WorkplaceService.GetAllAsync() ?? new();
+    }
+
+    private void StartCreate()
+    {
+        editingId = null;
+        editModel = new Diploma1.Web.Models.EmployeeDto
+        {
+            Role = "Employee",
+            DepartmentId = departments.FirstOrDefault()?.Id ?? Guid.Empty,
+            WorkplaceId = workplaces.FirstOrDefault()?.Id ?? Guid.Empty
+        };
+        isEditorOpen = true;
+    }
+
+    private void StartEdit(Diploma1.Web.Models.EmployeeDto employee)
+    {
+        editingId = employee.Id;
+        editModel = new Diploma1.Web.Models.EmployeeDto
+        {
+            Id = employee.Id,
+            FullName = employee.FullName,
+            Email = employee.Email,
+            Position = employee.Position,
+            DepartmentId = employee.DepartmentId,
+            WorkplaceId = employee.WorkplaceId,
+            Role = employee.Role,
+            AssignedEngineerId = employee.AssignedEngineerId
+        };
+        isEditorOpen = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId.HasValue)
+        {
+            await EmployeeService.UpdateAsync(editingId.Value, editModel);
+        }
+        else
+        {
+            await EmployeeService.CreateAsync(editModel);
+        }
+
+        await Refresh();
+        Cancel();
+    }
+
+    private async Task Delete(Guid id)
     {
         await EmployeeService.DeleteAsync(id);
-        employees = await EmployeeService.GetAllAsync();
+        await Refresh();
     }
+
+    private void Cancel()
+    {
+        isEditorOpen = false;
+        editingId = null;
+        editModel = new();
+    }
+
+    private async Task Refresh()
+    {
+        employees = await EmployeeService.GetAllAsync() ?? new();
+        engineers = employees.Where(e =>
+            e.Role.Equals("SafetyEngineer", StringComparison.OrdinalIgnoreCase) ||
+            e.Role.Equals("Engineer", StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    private string DepartmentName(Guid id) => departments.FirstOrDefault(d => d.Id == id)?.Name ?? "—";
+    private string WorkplaceName(Guid id) => workplaces.FirstOrDefault(w => w.Id == id)?.Name ?? "—";
+    private string EngineerName(Guid? id) => id is null ? "—" : employees?.FirstOrDefault(e => e.Id == id)?.FullName ?? "—";
 }
