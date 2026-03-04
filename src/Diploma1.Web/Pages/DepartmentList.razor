@@ -1,14 +1,24 @@
 @page "/departments"
 @inject Diploma1.Web.Services.DepartmentService DepartmentService
 
-<h3>Отделы</h3>
+<h1>Отделы</h1>
+
+<div class="toolbar">
+    <input placeholder="Поиск отдела" @bind="searchText" @bind:event="oninput" />
+    <button class="btn-primary" @onclick="StartCreate">Добавить отдел</button>
+</div>
+
 @if (departments == null)
 {
     <p>Загрузка...</p>
 }
+else if (!FilteredDepartments.Any())
+{
+    <p>Отделы не найдены.</p>
+}
 else
 {
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Название</th>
@@ -16,13 +26,13 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var dep in departments)
+            @foreach (var dep in FilteredDepartments)
             {
                 <tr>
                     <td>@dep.Name</td>
-                    <td>
-                        <button @onclick="() => Edit(dep.Id)">Изменить</button>
-                        <button @onclick="() => Delete(dep.Id)">Удалить</button>
+                    <td class="actions-cell">
+                        <button class="btn-outline" @onclick="() => StartEdit(dep)">Изменить</button>
+                        <button class="btn-danger" @onclick="() => Delete(dep.Id)">Удалить</button>
                     </td>
                 </tr>
             }
@@ -30,16 +40,81 @@ else
     </table>
 }
 
+@if (isEditorOpen)
+{
+    <section class="editor-panel">
+        <h3>@(editingId.HasValue ? "Редактирование отдела" : "Новый отдел")</h3>
+        <label>
+            Название
+            <input @bind="editModel.Name" />
+        </label>
+
+        <div class="editor-actions">
+            <button class="btn-primary" @onclick="Save">Сохранить</button>
+            <button class="btn-outline" @onclick="Cancel">Отмена</button>
+        </div>
+    </section>
+}
+
 @code {
-    List<Diploma1.Web.Models.DepartmentDto>? departments;
-    protected override async Task OnInitializedAsync()
+    private List<Diploma1.Web.Models.DepartmentDto>? departments;
+    private Diploma1.Web.Models.DepartmentDto editModel = new();
+    private Guid? editingId;
+    private bool isEditorOpen;
+    private string searchText = string.Empty;
+
+    private IEnumerable<Diploma1.Web.Models.DepartmentDto> FilteredDepartments =>
+        departments?.Where(d => string.IsNullOrWhiteSpace(searchText) ||
+                                d.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<Diploma1.Web.Models.DepartmentDto>();
+
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    private void StartCreate()
     {
-        departments = await DepartmentService.GetAllAsync();
+        editingId = null;
+        editModel = new();
+        isEditorOpen = true;
     }
-    void Edit(Guid id) { /* переход на страницу редактирования */ }
-    async Task Delete(Guid id)
+
+    private void StartEdit(Diploma1.Web.Models.DepartmentDto department)
+    {
+        editingId = department.Id;
+        editModel = new Diploma1.Web.Models.DepartmentDto
+        {
+            Id = department.Id,
+            Name = department.Name
+        };
+        isEditorOpen = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId.HasValue)
+        {
+            await DepartmentService.UpdateAsync(editingId.Value, editModel);
+        }
+        else
+        {
+            await DepartmentService.CreateAsync(editModel);
+        }
+
+        await Refresh();
+        Cancel();
+    }
+
+    private async Task Delete(Guid id)
     {
         await DepartmentService.DeleteAsync(id);
-        departments = await DepartmentService.GetAllAsync();
+        await Refresh();
     }
+
+    private void Cancel()
+    {
+        isEditorOpen = false;
+        editingId = null;
+        editModel = new();
+    }
+
+    private async Task Refresh() => departments = await DepartmentService.GetAllAsync() ?? new();
 }

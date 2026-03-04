@@ -1,14 +1,73 @@
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject Diploma1.Web.Services.UserContextService UserContext
 
-<div class="sidebar">
-    <nav>
-        <ul>
-            <li><a href="/employees">Сотрудники</a></li>
-            <li><a href="/departments">Отделы</a></li>
-            <li><a href="/workplaces">Рабочие места</a></li>
-        </ul>
-    </nav>
+<div class="app-shell">
+    <aside class="app-sidebar">
+        <div class="app-logo">SafetyFlow</div>
+        <p class="sidebar-caption">АРМ инженера по охране труда</p>
+
+        <nav class="app-nav">
+            <NavLink href="/" Match="NavLinkMatch.All">Панель</NavLink>
+
+            @if (UserContext.CurrentRole is Diploma1.Web.Services.AppRole.Administrator)
+            {
+                <NavLink href="/employees">Сотрудники</NavLink>
+                <NavLink href="/departments">Отделы</NavLink>
+                <NavLink href="/workplaces">Рабочие места</NavLink>
+                <NavLink href="/documents">Документы</NavLink>
+            }
+
+            @if (UserContext.CurrentRole is Diploma1.Web.Services.AppRole.SafetyEngineer)
+            {
+                <NavLink href="/attestations">Аттестации</NavLink>
+                <NavLink href="/analytics">Аналитика</NavLink>
+                <NavLink href="/briefings">Инструктажи</NavLink>
+                <NavLink href="/documents">Документы</NavLink>
+            }
+
+            @if (UserContext.CurrentRole is Diploma1.Web.Services.AppRole.Employee)
+            {
+                <NavLink href="/monitoring">Мониторинг условий</NavLink>
+                <NavLink href="/tests">Мои тесты</NavLink>
+                <NavLink href="/certificates">Справки</NavLink>
+                <NavLink href="/documents">Нормативные документы</NavLink>
+            }
+        </nav>
+    </aside>
+
+    <main class="app-content">
+        <header class="app-topbar">
+            <span>Текущая роль:</span>
+            <select value="@UserContext.CurrentRole" @onchange="OnRoleChange">
+                <option value="Administrator">Администратор</option>
+                <option value="SafetyEngineer">Инженер по ОТ</option>
+                <option value="Employee">Сотрудник</option>
+            </select>
+        </header>
+
+        @Body
+    </main>
 </div>
-<div class="main">
-    @Body
-</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        UserContext.Changed += OnContextChanged;
+    }
+
+    private void OnContextChanged() => InvokeAsync(StateHasChanged);
+
+    private void OnRoleChange(ChangeEventArgs args)
+    {
+        if (Enum.TryParse<Diploma1.Web.Services.AppRole>(args.Value?.ToString(), out var role))
+        {
+            UserContext.SetRole(role);
+        }
+    }
+
+    public void Dispose()
+    {
+        UserContext.Changed -= OnContextChanged;
+    }
+}

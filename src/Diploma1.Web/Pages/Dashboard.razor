@@ -1,0 +1,85 @@
+@page "/"
+@inject Diploma1.Web.Services.EmployeeService EmployeeService
+@inject Diploma1.Web.Services.DepartmentService DepartmentService
+@inject Diploma1.Web.Services.WorkplaceService WorkplaceService
+@inject Diploma1.Web.Services.UserContextService UserContext
+
+<h1>Панель управления</h1>
+<p class="page-subtitle">Комплексная система управления охраной труда и промышленной безопасностью.</p>
+
+@if (isLoading)
+{
+    <p>Загрузка показателей...</p>
+}
+else
+{
+    <div class="stats-grid">
+        <article class="stat-card">
+            <h3>@employeeCount</h3>
+            <p>Сотрудников в системе</p>
+        </article>
+        <article class="stat-card">
+            <h3>@departmentCount</h3>
+            <p>Отделов</p>
+        </article>
+        <article class="stat-card">
+            <h3>@workplaceCount</h3>
+            <p>Рабочих мест</p>
+        </article>
+    </div>
+
+    <section class="feature-block">
+        <h3>Быстрые действия для роли "@RoleTitle"</h3>
+
+        @if (UserContext.CurrentRole is Diploma1.Web.Services.AppRole.Administrator)
+        {
+            <div class="quick-links">
+                <a href="/employees">Управление сотрудниками</a>
+                <a href="/departments">Управление отделами</a>
+                <a href="/workplaces">Управление рабочими местами</a>
+            </div>
+        }
+        else if (UserContext.CurrentRole is Diploma1.Web.Services.AppRole.SafetyEngineer)
+        {
+            <div class="quick-links">
+                <a href="/attestations">Назначить аттестации</a>
+                <a href="/briefings">План инструктажей</a>
+                <a href="/analytics">Просмотр аналитики</a>
+            </div>
+        }
+        else
+        {
+            <div class="quick-links">
+                <a href="/monitoring">Отправить показатели условий труда</a>
+                <a href="/tests">Пройти тестирование</a>
+                <a href="/certificates">Отправить справку</a>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    private bool isLoading = true;
+    private int employeeCount;
+    private int departmentCount;
+    private int workplaceCount;
+
+    private string RoleTitle => UserContext.CurrentRole switch
+    {
+        Diploma1.Web.Services.AppRole.Administrator => "Администратор",
+        Diploma1.Web.Services.AppRole.SafetyEngineer => "Инженер по ОТ",
+        _ => "Сотрудник"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var employees = await EmployeeService.GetAllAsync() ?? new();
+        var departments = await DepartmentService.GetAllAsync() ?? new();
+        var workplaces = await WorkplaceService.GetAllAsync() ?? new();
+
+        employeeCount = employees.Count;
+        departmentCount = departments.Count;
+        workplaceCount = workplaces.Count;
+        isLoading = false;
+    }
+}

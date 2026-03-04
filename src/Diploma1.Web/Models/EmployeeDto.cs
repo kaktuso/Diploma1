@@ -11,5 +11,6 @@ namespace Diploma1.Web.Models
         public Guid DepartmentId { get; set; }
         public Guid WorkplaceId { get; set; }
         public string Role { get; set; } = string.Empty;
+        public Guid? AssignedEngineerId { get; set; }
     }
 }

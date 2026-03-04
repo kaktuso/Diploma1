@@ -1,0 +1,56 @@
+@page "/briefings"
+
+<h1>Расписание инструктажей</h1>
+<p class="page-subtitle">Планирование по отделам с email-уведомлениями.</p>
+
+<section class="editor-panel">
+    <div class="form-grid">
+        <label>Тип инструктажа <input @bind="briefingType" /></label>
+        <label>Отдел <input @bind="department" /></label>
+        <label>Дата <input type="date" @bind="date" /></label>
+    </div>
+    <div class="editor-actions">
+        <button class="btn-primary" @onclick="AddBriefing">Добавить в расписание</button>
+    </div>
+</section>
+
+<table class="data-table mt-3">
+    <thead>
+    <tr><th>Тип</th><th>Отдел</th><th>Дата</th><th>Статус</th></tr>
+    </thead>
+    <tbody>
+    @foreach (var row in schedule)
+    {
+        <tr>
+            <td>@row.Type</td>
+            <td>@row.Department</td>
+            <td>@row.Date.ToString("dd.MM.yyyy")</td>
+            <td>@row.Status</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    private string briefingType = "Плановый";
+    private string department = "Склад";
+    private DateTime date = DateTime.Today.AddDays(2);
+
+    private readonly List<BriefingRow> schedule =
+    [
+        new() { Type = "Вводный", Department = "Технический", Date = DateTime.Today.AddDays(1), Status = "Уведомления отправлены" }
+    ];
+
+    private void AddBriefing()
+    {
+        schedule.Insert(0, new BriefingRow { Type = briefingType, Department = department, Date = date, Status = "Запланирован" });
+    }
+
+    private sealed class BriefingRow
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Department { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+}

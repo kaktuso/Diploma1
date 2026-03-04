@@ -1,0 +1,95 @@
+@page "/monitoring"
+
+<h1>Мониторинг условий труда</h1>
+<p class="page-subtitle">Нормативы РБ: температура 18–24°C, освещённость ≥ 300 лк, шум ≤ 80 дБ.</p>
+
+<section class="editor-panel">
+    <div class="form-grid">
+        <label>Температура (°C)
+            <input type="number" @bind="temperature" />
+        </label>
+        <label>Освещённость (лк)
+            <input type="number" @bind="illumination" />
+        </label>
+        <label>Шум (дБ)
+            <input type="number" @bind="noise" />
+        </label>
+        <label>Влажность (%)
+            <input type="number" @bind="humidity" />
+        </label>
+        <label>Опасные факторы
+            <input @bind="hazards" />
+        </label>
+    </div>
+
+    <div class="editor-actions">
+        <button class="btn-primary" @onclick="AddRecord">Отправить показатели</button>
+    </div>
+</section>
+
+<table class="data-table mt-3">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Температура</th>
+            <th>Освещённость</th>
+            <th>Шум</th>
+            <th>Влажность</th>
+            <th>Факторы</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in records)
+        {
+            <tr>
+                <td>@row.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@row.Temperature</td>
+                <td>@row.Illumination</td>
+                <td>@row.Noise</td>
+                <td>@row.Humidity</td>
+                <td>@row.Hazards</td>
+                <td><span class="@(row.IsViolation ? "tag-danger" : "tag-success")">@(row.IsViolation ? "Нарушение" : "Норма")</span></td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private decimal temperature = 22;
+    private decimal illumination = 350;
+    private decimal noise = 65;
+    private decimal humidity = 45;
+    private string hazards = "Нет";
+
+    private readonly List<MonitoringRow> records = new();
+
+    private void AddRecord()
+    {
+        var isViolation = temperature < 18 || temperature > 24 || illumination < 300 || noise > 80;
+
+        records.Insert(0, new MonitoringRow
+        {
+            CreatedAt = DateTime.Now,
+            Temperature = temperature,
+            Illumination = illumination,
+            Noise = noise,
+            Humidity = humidity,
+            Hazards = hazards,
+            IsViolation = isViolation
+        });
+
+        hazards = "Нет";
+    }
+
+    private sealed class MonitoringRow
+    {
+        public DateTime CreatedAt { get; set; }
+        public decimal Temperature { get; set; }
+        public decimal Illumination { get; set; }
+        public decimal Noise { get; set; }
+        public decimal Humidity { get; set; }
+        public string Hazards { get; set; } = string.Empty;
+        public bool IsViolation { get; set; }
+    }
+}
