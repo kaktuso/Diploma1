@@ -1,0 +1,63 @@
+@page "/documents"
+
+<h1>Нормативные документы</h1>
+<p class="page-subtitle">Хранение PDF в БД, просмотр и управление доступом.</p>
+
+<div class="toolbar">
+    <input placeholder="Поиск по названию документа" @bind="searchText" @bind:event="oninput" />
+    <button class="btn-primary" @onclick="Upload">Загрузить PDF</button>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Документ</th>
+            <th>Категория</th>
+            <th>Версия</th>
+            <th>Доступ</th>
+            <th>Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var doc in Filtered)
+        {
+            <tr>
+                <td>@doc.Title</td>
+                <td>@doc.Category</td>
+                <td>@doc.Version</td>
+                <td>@doc.Access</td>
+                <td class="actions-cell">
+                    <button class="btn-outline">Просмотр</button>
+                    <button class="btn-outline">Скачать</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string searchText = string.Empty;
+
+    private readonly List<DocRow> docs =
+    [
+        new() { Title = "Инструкция по ОТ №12", Category = "Инструктаж", Version = "v3.1", Access = "Все сотрудники" },
+        new() { Title = "Положение о СОУТ", Category = "Регламент", Version = "v2.4", Access = "Инженер/Админ" },
+        new() { Title = "Памятка по эвакуации", Category = "Безопасность", Version = "v1.0", Access = "Все сотрудники" }
+    ];
+
+    private IEnumerable<DocRow> Filtered => docs.Where(d =>
+        string.IsNullOrWhiteSpace(searchText) ||
+        d.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+
+    private void Upload()
+    {
+    }
+
+    private sealed class DocRow
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Version { get; set; } = string.Empty;
+        public string Access { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,62 @@
+@page "/certificates"
+
+<h1>Справки и подтверждения</h1>
+<p class="page-subtitle">Загрузка фото справки, отправка инженеру и ведение реестра.</p>
+
+<section class="editor-panel">
+    <div class="form-grid">
+        <label>Тип справки
+            <input @bind="certificateType" />
+        </label>
+        <label>Комментарий
+            <input @bind="comment" />
+        </label>
+    </div>
+
+    <div class="editor-actions">
+        <button class="btn-primary" @onclick="Send">Отправить инженеру</button>
+    </div>
+</section>
+
+<table class="data-table mt-3">
+    <thead>
+        <tr><th>Тип</th><th>Дата</th><th>Статус</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in registry)
+        {
+            <tr>
+                <td>@item.Type</td>
+                <td>@item.Date.ToString("dd.MM.yyyy")</td>
+                <td>@item.Status</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private string certificateType = "Медицинская справка";
+    private string comment = string.Empty;
+
+    private readonly List<CertificateRow> registry =
+    [
+        new() { Type = "Справка о прохождении медосмотра", Date = DateTime.Today.AddDays(-10), Status = "Подтверждена" }
+    ];
+
+    private void Send()
+    {
+        registry.Insert(0, new CertificateRow
+        {
+            Type = certificateType,
+            Date = DateTime.Today,
+            Status = "Отправлено инженеру"
+        });
+    }
+
+    private sealed class CertificateRow
+    {
+        public string Type { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+}

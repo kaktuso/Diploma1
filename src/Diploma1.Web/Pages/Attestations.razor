@@ -1,0 +1,80 @@
+@page "/attestations"
+
+<h1>Аттестации персонала</h1>
+<p class="page-subtitle">Группы формируются автоматически до 10 человек по приоритету истечения срока.</p>
+
+<div class="stats-grid">
+    <article class="stat-card"><h3>@expiringSoon</h3><p>Истекают в ближайшие 30 дней</p></article>
+    <article class="stat-card"><h3>@plannedGroups</h3><p>Сформировано групп</p></article>
+    <article class="stat-card"><h3>@failedCount</h3><p>Не сдали (пересдача через 15 дней)</p></article>
+</div>
+
+<section class="editor-panel">
+    <h3>Назначить аттестацию</h3>
+    <div class="form-grid">
+        <label>Ответственный инженер <input @bind="responsibleEngineer" /></label>
+        <label>Дата аттестации <input type="date" @bind="attestationDate" /></label>
+        <label>Отдел <input @bind="department" /></label>
+    </div>
+    <div class="editor-actions">
+        <button class="btn-primary" @onclick="Schedule">Сформировать группы</button>
+    </div>
+</section>
+
+<table class="data-table mt-3">
+    <thead>
+    <tr>
+        <th>Группа</th><th>Сотрудников</th><th>Дата</th><th>Ответственный</th><th>Статус</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var group in groups)
+    {
+        <tr>
+            <td>@group.Name</td>
+            <td>@group.Count</td>
+            <td>@group.Date.ToString("dd.MM.yyyy")</td>
+            <td>@group.Engineer</td>
+            <td>@group.Status</td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    private int expiringSoon = 14;
+    private int plannedGroups = 5;
+    private int failedCount = 3;
+
+    private string responsibleEngineer = "Иванов И.И.";
+    private DateTime attestationDate = DateTime.Today.AddDays(7);
+    private string department = "Производственный";
+
+    private readonly List<GroupRow> groups =
+    [
+        new() { Name = "Группа A-01", Count = 10, Date = DateTime.Today.AddDays(3), Engineer = "Иванов И.И.", Status = "Запланирована" },
+        new() { Name = "Группа A-02", Count = 8, Date = DateTime.Today.AddDays(5), Engineer = "Петров П.П.", Status = "Запланирована" }
+    ];
+
+    private void Schedule()
+    {
+        groups.Insert(0, new GroupRow
+        {
+            Name = $"Группа A-{groups.Count + 1:00}",
+            Count = 10,
+            Date = attestationDate,
+            Engineer = responsibleEngineer,
+            Status = $"Назначена для отдела: {department}"
+        });
+        plannedGroups = groups.Count;
+    }
+
+    private sealed class GroupRow
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public DateTime Date { get; set; }
+        public string Engineer { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+}

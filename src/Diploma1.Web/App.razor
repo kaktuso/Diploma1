@@ -1,10 +1,16 @@
-<Router AppAssembly="typeof(Program).Assembly">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
-    </Found>
-    <NotFound>
-        <LayoutView Layout="typeof(MainLayout)">
-            <p>Страница не найдена.</p>
-        </LayoutView>
-    </NotFound>
-</Router>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href='@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]' />
+    <link rel="stylesheet" href='@Assets["css/site.css"]' />
+    <link rel="stylesheet" href='@Assets["Diploma1.Web.styles.css"]' />
+    <HeadOutlet @rendermode="InteractiveServer" />
+</head>
+<body>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

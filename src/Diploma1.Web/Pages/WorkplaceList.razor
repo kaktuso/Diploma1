@@ -1,14 +1,24 @@
 @page "/workplaces"
 @inject Diploma1.Web.Services.WorkplaceService WorkplaceService
 
-<h3>Рабочие места</h3>
+<h1>Рабочие места</h1>
+
+<div class="toolbar">
+    <input placeholder="Поиск рабочего места" @bind="searchText" @bind:event="oninput" />
+    <button class="btn-primary" @onclick="StartCreate">Добавить рабочее место</button>
+</div>
+
 @if (workplaces == null)
 {
     <p>Загрузка...</p>
 }
+else if (!FilteredWorkplaces.Any())
+{
+    <p>Рабочие места не найдены.</p>
+}
 else
 {
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Название</th>
@@ -17,14 +27,14 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var wp in workplaces)
+            @foreach (var wp in FilteredWorkplaces)
             {
                 <tr>
                     <td>@wp.Name</td>
                     <td>@wp.Type</td>
-                    <td>
-                        <button @onclick="() => Edit(wp.Id)">Изменить</button>
-                        <button @onclick="() => Delete(wp.Id)">Удалить</button>
+                    <td class="actions-cell">
+                        <button class="btn-outline" @onclick="() => StartEdit(wp)">Изменить</button>
+                        <button class="btn-danger" @onclick="() => Delete(wp.Id)">Удалить</button>
                     </td>
                 </tr>
             }
@@ -32,16 +42,91 @@ else
     </table>
 }
 
+@if (isEditorOpen)
+{
+    <section class="editor-panel">
+        <h3>@(editingId.HasValue ? "Редактирование рабочего места" : "Новое рабочее место")</h3>
+        <div class="form-grid">
+            <label>
+                Название
+                <input @bind="editModel.Name" />
+            </label>
+            <label>
+                Тип
+                <input @bind="editModel.Type" />
+            </label>
+        </div>
+
+        <div class="editor-actions">
+            <button class="btn-primary" @onclick="Save">Сохранить</button>
+            <button class="btn-outline" @onclick="Cancel">Отмена</button>
+        </div>
+    </section>
+}
+
 @code {
-    List<Diploma1.Web.Models.WorkplaceDto>? workplaces;
-    protected override async Task OnInitializedAsync()
+    private List<Diploma1.Web.Models.WorkplaceDto>? workplaces;
+    private Diploma1.Web.Models.WorkplaceDto editModel = new();
+    private Guid? editingId;
+    private bool isEditorOpen;
+    private string searchText = string.Empty;
+
+    private IEnumerable<Diploma1.Web.Models.WorkplaceDto> FilteredWorkplaces =>
+        workplaces?.Where(w =>
+            string.IsNullOrWhiteSpace(searchText) ||
+            w.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+            w.Type.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ?? Enumerable.Empty<Diploma1.Web.Models.WorkplaceDto>();
+
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    private void StartCreate()
     {
-        workplaces = await WorkplaceService.GetAllAsync();
+        editingId = null;
+        editModel = new();
+        isEditorOpen = true;
     }
-    void Edit(Guid id) { /* переход на страницу редактирования */ }
-    async Task Delete(Guid id)
+
+    private void StartEdit(Diploma1.Web.Models.WorkplaceDto workplace)
+    {
+        editingId = workplace.Id;
+        editModel = new Diploma1.Web.Models.WorkplaceDto
+        {
+            Id = workplace.Id,
+            Name = workplace.Name,
+            Type = workplace.Type,
+            DepartmentId = workplace.DepartmentId
+        };
+        isEditorOpen = true;
+    }
+
+    private async Task Save()
+    {
+        if (editingId.HasValue)
+        {
+            await WorkplaceService.UpdateAsync(editingId.Value, editModel);
+        }
+        else
+        {
+            await WorkplaceService.CreateAsync(editModel);
+        }
+
+        await Refresh();
+        Cancel();
+    }
+
+    private async Task Delete(Guid id)
     {
         await WorkplaceService.DeleteAsync(id);
-        workplaces = await WorkplaceService.GetAllAsync();
+        await Refresh();
     }
+
+    private void Cancel()
+    {
+        isEditorOpen = false;
+        editingId = null;
+        editModel = new();
+    }
+
+    private async Task Refresh() => workplaces = await WorkplaceService.GetAllAsync() ?? new();
 }
