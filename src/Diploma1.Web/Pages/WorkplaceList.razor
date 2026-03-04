@@ -1,0 +1,47 @@
+@page "/workplaces"
+@inject Diploma1.Web.Services.WorkplaceService WorkplaceService
+
+<h3>Рабочие места</h3>
+@if (workplaces == null)
+{
+    <p>Загрузка...</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Тип</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var wp in workplaces)
+            {
+                <tr>
+                    <td>@wp.Name</td>
+                    <td>@wp.Type</td>
+                    <td>
+                        <button @onclick="() => Edit(wp.Id)">Изменить</button>
+                        <button @onclick="() => Delete(wp.Id)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Diploma1.Web.Models.WorkplaceDto>? workplaces;
+    protected override async Task OnInitializedAsync()
+    {
+        workplaces = await WorkplaceService.GetAllAsync();
+    }
+    void Edit(Guid id) { /* переход на страницу редактирования */ }
+    async Task Delete(Guid id)
+    {
+        await WorkplaceService.DeleteAsync(id);
+        workplaces = await WorkplaceService.GetAllAsync();
+    }
+}

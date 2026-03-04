@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Diploma1.ApiGateway/Diploma1.ApiGateway.csproj" />
+    <Project Path="src/Diploma1.Application/Diploma1.Application.csproj" />
+    <Project Path="src/Diploma1.Domain/Diploma1.Domain.csproj" />
+    <Project Path="src/Diploma1.Infrastructure/Diploma1.Infrastructure.csproj" />
+    <Project Path="src/Diploma1.Web/Diploma1.Web.csproj" />
+    <Project Path="src/Diploma1.WebApi/Diploma1.WebApi.csproj" />
+  </Folder>
+</Solution>

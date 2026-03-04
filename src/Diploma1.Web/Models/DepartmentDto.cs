@@ -1,0 +1,10 @@
+using System;
+
+namespace Diploma1.Web.Models
+{
+    public class DepartmentDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,49 @@
+@page "/employees"
+@inject Diploma1.Web.Services.EmployeeService EmployeeService
+
+<h3>Сотрудники</h3>
+@if (employees == null)
+{
+    <p>Загрузка...</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Email</th>
+                <th>Должность</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var emp in employees)
+            {
+                <tr>
+                    <td>@emp.FullName</td>
+                    <td>@emp.Email</td>
+                    <td>@emp.Position</td>
+                    <td>
+                        <button @onclick="() => Edit(emp.Id)">Изменить</button>
+                        <button @onclick="() => Delete(emp.Id)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Diploma1.Web.Models.EmployeeDto>? employees;
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await EmployeeService.GetAllAsync();
+    }
+    void Edit(Guid id) { /* переход на страницу редактирования */ }
+    async Task Delete(Guid id)
+    {
+        await EmployeeService.DeleteAsync(id);
+        employees = await EmployeeService.GetAllAsync();
+    }
+}

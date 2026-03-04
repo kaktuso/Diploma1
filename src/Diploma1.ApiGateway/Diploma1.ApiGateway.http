@@ -1,0 +1,6 @@
+@Diploma1.ApiGateway_HostAddress = http://localhost:5234
+
+GET {{Diploma1.ApiGateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
