@@ -36,10 +36,10 @@
     private string department = "Склад";
     private DateTime date = DateTime.Today.AddDays(2);
 
-    private readonly List<BriefingRow> schedule =
-    [
+    private readonly List<BriefingRow> schedule = new()
+    {
         new() { Type = "Вводный", Department = "Технический", Date = DateTime.Today.AddDays(1), Status = "Уведомления отправлены" }
-    ];
+    };
 
     private void AddBriefing()
     {

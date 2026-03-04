@@ -38,10 +38,10 @@
     private string certificateType = "Медицинская справка";
     private string comment = string.Empty;
 
-    private readonly List<CertificateRow> registry =
-    [
+    private readonly List<CertificateRow> registry = new()
+    {
         new() { Type = "Справка о прохождении медосмотра", Date = DateTime.Today.AddDays(-10), Status = "Подтверждена" }
-    ];
+    };
 
     private void Send()
     {

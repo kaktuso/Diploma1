@@ -50,11 +50,11 @@
     private DateTime attestationDate = DateTime.Today.AddDays(7);
     private string department = "Производственный";
 
-    private readonly List<GroupRow> groups =
-    [
+    private readonly List<GroupRow> groups = new()
+    {
         new() { Name = "Группа A-01", Count = 10, Date = DateTime.Today.AddDays(3), Engineer = "Иванов И.И.", Status = "Запланирована" },
         new() { Name = "Группа A-02", Count = 8, Date = DateTime.Today.AddDays(5), Engineer = "Петров П.П.", Status = "Запланирована" }
-    ];
+    };
 
     private void Schedule()
     {

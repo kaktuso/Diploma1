@@ -38,12 +38,12 @@
 @code {
     private string searchText = string.Empty;
 
-    private readonly List<DocRow> docs =
-    [
+    private readonly List<DocRow> docs = new()
+    {
         new() { Title = "Инструкция по ОТ №12", Category = "Инструктаж", Version = "v3.1", Access = "Все сотрудники" },
         new() { Title = "Положение о СОУТ", Category = "Регламент", Version = "v2.4", Access = "Инженер/Админ" },
         new() { Title = "Памятка по эвакуации", Category = "Безопасность", Version = "v1.0", Access = "Все сотрудники" }
-    ];
+    };
 
     private IEnumerable<DocRow> Filtered => docs.Where(d =>
         string.IsNullOrWhiteSpace(searchText) ||
